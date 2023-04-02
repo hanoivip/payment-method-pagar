@@ -10,23 +10,38 @@ class PagarSession implements IPaymentSession
     
     private $channels;
     
-    public function __construct($trans, $channels)
+    private $customer;
+    
+    private $billing;
+    
+    private $shipping;
+    
+    private $param;
+    
+    public function __construct($trans, $channels, $cinfo, $billing, $shipping, $param)
     {
         $this->trans = $trans;
         $this->channels = $channels;
+        $this->customer = $cinfo;
+        $this->billing = $billing;
+        $this->shipping = $shipping;
+        $this->param = $param;
     }
     
     public function getSecureData()
-    {}
+    {
+        return [];
+    }
     
     public function getGuide()
     {
-        return __('pagar::pagar.guide');
+        return __('hanoivip.pagar::pagar.guide');
     }
     
     public function getData()
     {
-        return $this->channels;
+        return ['customer' => $this->customer, 'billing' => $this->billing, 
+            'shipping' => $this->shipping, 'param' => $this->param ];
     }
     
     public function getTransId()

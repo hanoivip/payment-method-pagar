@@ -39,17 +39,18 @@ class PagarMethod implements IPaymentMethod
         $cinfo = [];
         $billing = [];
         $shipping = [];
-        $card = [];
+        $param = [];
         // load customer, billing, shipping, cards info - if any
         $userId = Auth::user()->getAuthIdentifier();
         $customer = Customer::where('user_id', $userId)->first();
         if (empty($customer))
         {
             $customer = new Customer();
+            $customer->user_id = $userId;
             $customer->info = json_encode([]);
             $customer->billing = json_encode([]);
             $customer->shipping = json_encode([]);
-            $customer->credit = json_encode([]);
+            $customer->param = json_encode([]);
             $customer->save();
         }
         else 
@@ -58,12 +59,12 @@ class PagarMethod implements IPaymentMethod
             $billing = json_decode($customer->billing, true);
             $shipping = json_decode($customer->shipping, true);
             $param = json_decode($customer->param, true);
-            if (empty($cinfo)) $cinfo = session()->get('info', []);
-            if (empty($billing)) $billing = session()->get('billing', []);
-            if (empty($shipping)) $shipping = session()->get('shipping', []);
+            //if (empty($cinfo)) $cinfo = session()->get('info', []);
+            //if (empty($billing)) $billing = session()->get('billing', []);
+            //if (empty($shipping)) $shipping = session()->get('shipping', []);
             //if (empty($card)) $card = session()->get('card', []);
         }
-        return new PagarSession($trans, $channels, $cinfo[], $billing, $shipping, $param);
+        return new PagarSession($trans, $channels, $cinfo, $billing, $shipping, $param);
     }
     
     private function getCustomer($params)
@@ -71,17 +72,17 @@ class PagarMethod implements IPaymentMethod
         $userId = Auth::user()->getAuthIdentifier();
         return [
                 'external_id' => $userId,
-                'name' => $params['customer.name'],
+                'name' => $params['customer_name'],
                 'type' => 'individual',
                 'country' => 'br',
                 'documents' => [
                     [
-                        'type' => $params['customer.doc_type'],
-                        'number' => $params['customer.doc_number'],
+                        'type' => $params['customer_doc_type'],
+                        'number' => $params['customer_doc_number'],
                     ]
                 ],
-                'phone_numbers' => [ $params['customer.phone'] ],
-                'email' => $params['customer.email']
+                'phone_numbers' => [ $params['customer_phone'] ],
+                'email' => $params['customer_email']
             ];
     }
     
@@ -123,15 +124,16 @@ class PagarMethod implements IPaymentMethod
     private function getCredit($params)
     {
         return [
-            'card_holder_name' => $params['credit.holder'],
-            'card_cvv' => $params['credit.ccv'],
-            'card_number' => $params['credit.number'],
-            'card_expiration_date' => $params['credit.expire'],
+            'card_holder_name' => $params['credit_holder'],
+            'card_cvv' => $params['credit_ccv'],
+            'card_number' => $params['credit_number'],
+            'card_expiration_date' => $params['credit_expire'],
         ];
     }
 
     public function request($trans, $params)
     {
+        Log::error(print_r($params, true));
         if (!isset($params['channel']))
         {
             return new PagarFailure($trans, __('pagar::pagar.invalid-request'));
@@ -143,12 +145,9 @@ class PagarMethod implements IPaymentMethod
         $shipping = $this->getShipping($params);
         // validate params
         // ...
-        //
+        // get 
         $userId = Auth::user()->getAuthIdentifier();
         $customer = Customer::where('user_id', $userId)->first();
-        $customer->info = json_encode($info);
-        $customer->billing = json_encode($billing);
-        $customer->shipping = json_encode($shipping);
         $order = $trans->order;
         $orderDetail = IapFacade::detail($order);
         $this->helper->setConfig($this->config);
@@ -159,7 +158,11 @@ class PagarMethod implements IPaymentMethod
                 case 'credit': $param = $this->getCredit($params);
             }
             // save user input
-            $customer->param = [$channel => $param];
+            $customer->info = json_encode($info);
+            $customer->billing = json_encode($billing);
+            $customer->shipping = json_encode($shipping);
+            $p = json_decode($customer->param, true);
+            $customer->param = array_merge($p, [$channel => $param]);
             $customer->save();
             // invoke service
             $result = $this->helper->create($trans->trans_id, $channel, $info, $billing, $shipping, $orderDetail, $param);
@@ -169,6 +172,7 @@ class PagarMethod implements IPaymentMethod
                 return new PagarFailure($trans, $result);
             }
             // save transaction
+            $log->channel = $channel;
             $log->result = json_encode($result);
             $log->save();
             return new PagarResult($result);

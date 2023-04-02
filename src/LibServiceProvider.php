@@ -16,14 +16,14 @@ class LibServiceProvider extends ServiceProvider
         //$this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
         $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
         $this->loadTranslationsFrom( __DIR__.'/../lang', 'hanoivip.pagar');
-        $this->loadViewsFrom(__DIR__ . '/../views', 'pagar');
+        $this->loadViewsFrom(__DIR__ . '/../views', 'hanoivip');
     }
     
     public function register()
     {
         $this->commands([
         ]);
-        $this->app->bind("PagarPaymentMethod", PagarMethod::class);
+        $this->app->bind("PagarMethod", PagarMethod::class);
         $this->app->bind(IHelper::class, PagarApi::class);
     }
 }

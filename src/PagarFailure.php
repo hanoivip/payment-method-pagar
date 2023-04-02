@@ -30,6 +30,7 @@ class PagarFailure implements IPaymentResult
         $arr['isFailure'] = $this->isFailure();
         $arr['isSuccess'] = $this->isSuccess();
         $arr['trans'] = $this->getTransId();
+        $arr['currency'] = $this->getCurrency();
         return $arr;
     }
 
@@ -57,5 +58,11 @@ class PagarFailure implements IPaymentResult
     {
         return 0;
     }
+    
+    public function getCurrency()
+    {
+        return 'BRL';
+    }
+
 
 }

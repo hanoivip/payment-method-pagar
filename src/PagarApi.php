@@ -2,15 +2,17 @@
 
 namespace Hanoivip\PaymentMethodPagar;
 
+use Illuminate\Support\Facades\Log;
 use PagarMe\Client as PagarMeClient;
 
 class PagarApi implements IHelper
 {
     private $pagarme;
     
-    public function __construct($cfg)
+    private $cfg;
+    
+    public function __construct()
     {
-        $this->pagarme = new PagarMeClient($cfg['private_key']);
     }
     
     public function fetch($ref)
@@ -44,6 +46,10 @@ class PagarApi implements IHelper
     }
 
     public function setConfig($cfg)
-    {}
+    {
+        $this->cfg = $cfg;
+        Log::error(print_r($cfg, true));
+        $this->pagarme = new PagarMeClient($cfg['private_key']);
+    }
 
 }

@@ -10,6 +10,7 @@ class CreatePagarCustomers extends Migration
     {
         Schema::create('pagar_customers', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->integer('user_id');
             $table->text('info')->nullable();
             $table->text('billing')->nullable();
             $table->text('shipping')->nullable();
