@@ -204,5 +204,10 @@ class PagarMethod implements IPaymentMethod
     public function config($cfg)
     {
         $this->config = $cfg;
-    }    
+    }
+    public function validate($params)
+    {
+        return false;
+    }
+    
 }
